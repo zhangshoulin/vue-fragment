@@ -69,16 +69,30 @@ function getFragmentState(node: Node): FragmentState | null {
 
 const insertBeforePatched = Symbol('fragmentInsertBeforePatched')
 
-function getFragmentNodeFirstChild(node: Node): Node {
+type FragmentBoundary = 'first' | 'last'
+
+function getFragmentBoundaryNode(node: Node, boundary: FragmentBoundary): Node {
   const fragmentState = getFragmentState(node)
   if (!fragmentState) {
     return node
   }
 
-  const firstChild = fragmentState.children[0] || fragmentState.anchor
-  return isFragmentNode(firstChild)
-    ? getFragmentNodeFirstChild(firstChild)
-    : firstChild
+  const { anchor, children } = fragmentState
+  if (!children.length) {
+    return anchor
+  }
+
+  const boundaryNode =
+    boundary === 'first' ? children[0] : children[children.length - 1]
+  return getFragmentBoundaryNode(boundaryNode, boundary)
+}
+
+function getFragmentNodeFirstChild(node: Node): Node {
+  return getFragmentBoundaryNode(node, 'first')
+}
+
+function getFragmentNodeLastChild(node: Node): Node {
+  return getFragmentBoundaryNode(node, 'last')
 }
 
 function removeNode(node: Node): void {
@@ -122,7 +136,7 @@ function patchContainer(container: Node): void {
     referenceChild: Node | null,
   ): T {
     const reference =
-      referenceChild && isFragmentNode(referenceChild)
+      referenceChild && getFragmentState(referenceChild)
         ? getFragmentNodeFirstChild(referenceChild)
         : referenceChild
     const fragmentState = getFragmentState(newChild)
@@ -233,11 +247,7 @@ const Fragment: FragmentComponent = {
           }
           Object.defineProperty(fragment, 'nextSibling', {
             get(this: FragmentNode) {
-              const { anchor, children } = this.fragmentState
-              const lastChild = children.length
-                ? children[children.length - 1]
-                : anchor
-              return lastChild.nextSibling
+              return getFragmentNodeLastChild(this).nextSibling
             },
             configurable: true,
           })
@@ -256,7 +266,10 @@ const Fragment: FragmentComponent = {
 
           if (fragmentState.children.length && newChildren.length === 0) {
             fragmentState.changeType = CHANGE_TYPE.LIST_TO_EMPTY
-            parentNode.insertBefore(anchor, fragmentState.children[0])
+            parentNode.insertBefore(
+              anchor,
+              getFragmentNodeFirstChild(fragmentVNode.elm),
+            )
           } else if (!fragmentState.children.length && newChildren.length) {
             fragmentState.changeType = CHANGE_TYPE.EMPTY_TO_LIST
           } else if (!fragmentState.children.length) {

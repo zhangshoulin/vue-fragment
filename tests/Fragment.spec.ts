@@ -184,6 +184,90 @@ describe('Fragment', () => {
     vm.$destroy()
   })
 
+  it('inserts a keyed sibling before a nested Fragment boundary', async () => {
+    const vm = mount(
+      Vue.extend({
+        data: () => ({ visible: false }),
+        render(createElement) {
+          return createElement('main', [
+            ...(this.visible
+              ? [createElement('span', { key: 'new' }, 'new')]
+              : []),
+            createElement(Fragment, { key: 'outer' }, [
+              createElement(Fragment, { key: 'inner' }, [
+                createElement('span', 'inner'),
+              ]),
+            ]),
+          ])
+        },
+      }),
+    )
+
+    vm.visible = true
+    await update(vm)
+    expect(vm.$el.innerHTML).toBe('<span>new</span><span>inner</span>')
+    vm.$destroy()
+  })
+
+  it('appends inside a Fragment ending with a nested Fragment', async () => {
+    const vm = mount(
+      Vue.extend({
+        data: () => ({ appended: false }),
+        render(createElement) {
+          return createElement('main', [
+            createElement(Fragment, { key: 'outer' }, [
+              createElement('span', { key: 'first' }, 'first'),
+              createElement(Fragment, { key: 'inner' }, [
+                createElement('span', 'last'),
+              ]),
+              ...(this.appended
+                ? [createElement('b', { key: 'new' }, 'new')]
+                : []),
+            ]),
+            createElement('span', { key: 'after' }, 'after'),
+          ])
+        },
+      }),
+    )
+
+    vm.appended = true
+    await update(vm)
+    expect(vm.$el.innerHTML).toBe(
+      '<span>first</span><span>last</span><b>new</b><span>after</span>',
+    )
+    vm.$destroy()
+  })
+
+  it('empties a Fragment starting with a nested Fragment', async () => {
+    const vm = mount(
+      Vue.extend({
+        data: () => ({ visible: true }),
+        render(createElement) {
+          return createElement('main', [
+            createElement(
+              Fragment,
+              { key: 'outer' },
+              this.visible
+                ? [
+                    createElement(Fragment, { key: 'inner' }, [
+                      createElement('span', 'inner'),
+                    ]),
+                  ]
+                : [],
+            ),
+            createElement('footer', 'tail'),
+          ])
+        },
+      }),
+    )
+
+    vm.visible = false
+    await update(vm)
+    expect(vm.$el.querySelector('span')).toBeNull()
+    expect(vm.$el.lastElementChild?.outerHTML).toBe('<footer>tail</footer>')
+    vm.$destroy()
+  })
+
   it('moves a keyed Fragment as a single group', async () => {
     const vm = mount(
       Vue.extend({
