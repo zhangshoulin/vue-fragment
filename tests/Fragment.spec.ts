@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import type { VueConstructor } from 'vue'
+import type { VNode, VueConstructor } from 'vue'
 import Fragment from '../src/Fragment'
 
 function mount<T extends Vue>(Component: VueConstructor<T>): T {
@@ -293,6 +293,101 @@ describe('Fragment', () => {
     vm.flipped = false
     await update(vm)
     expect(vm.$el.innerHTML).toBe('<i>one</i><i>two</i><strong>single</strong>')
+    vm.$destroy()
+  })
+
+  it('keeps a Fragment stable when inserted before its own range', async () => {
+    let fragmentVNode: VNode
+    const vm = mount(
+      Vue.extend({
+        data: () => ({ items: ['A', 'B', 'C'] }),
+        render(createElement) {
+          fragmentVNode = createElement(
+            Fragment,
+            { key: 'fragment' },
+            this.items.map((item) => createElement('i', { key: item }, item)),
+          )
+          return createElement('main', [
+            fragmentVNode,
+            createElement('strong', 'after'),
+          ])
+        },
+      }),
+    )
+    const parent = vm.$el
+    const fragmentNode = fragmentVNode!.elm as Node
+    const expectStableOrder = () => {
+      expect(
+        Array.from(parent.children).map((node) => node.textContent),
+      ).toEqual([...vm.items, 'after'])
+    }
+
+    parent.insertBefore(fragmentNode, fragmentNode)
+    expectStableOrder()
+    parent.insertBefore(fragmentNode, parent.children[0])
+    expectStableOrder()
+    parent.insertBefore(fragmentNode, parent.children[1])
+    expectStableOrder()
+
+    vm.items = ['A', 'B', 'C', 'D']
+    await update(vm)
+    expectStableOrder()
+    vm.$destroy()
+  })
+
+  it('keeps an outer Fragment stable when inserted before its inner Fragment', () => {
+    let outerVNode: VNode
+    let innerVNode: VNode
+    const vm = mount(
+      Vue.extend({
+        render(createElement) {
+          innerVNode = createElement(Fragment, { key: 'inner' }, [
+            createElement('i', 'inner'),
+          ])
+          outerVNode = createElement(Fragment, { key: 'outer' }, [
+            createElement('span', 'first'),
+            innerVNode,
+          ])
+          return createElement('main', [
+            outerVNode,
+            createElement('strong', 'after'),
+          ])
+        },
+      }),
+    )
+
+    vm.$el.insertBefore(outerVNode!.elm as Node, innerVNode!.elm as Node)
+    expect(Array.from(vm.$el.children).map((node) => node.textContent)).toEqual(
+      ['first', 'inner', 'after'],
+    )
+    vm.$destroy()
+  })
+
+  it('keeps an empty Fragment stable when inserted before itself', async () => {
+    let fragmentVNode: VNode
+    const vm = mount(
+      Vue.extend({
+        data: () => ({ visible: false }),
+        render(createElement) {
+          fragmentVNode = createElement(
+            Fragment,
+            { key: 'fragment' },
+            this.visible ? [createElement('i', 'visible')] : [],
+          )
+          return createElement('main', [
+            fragmentVNode,
+            createElement('strong', 'after'),
+          ])
+        },
+      }),
+    )
+
+    vm.$el.insertBefore(fragmentVNode!.elm as Node, fragmentVNode!.elm as Node)
+    vm.visible = true
+    await update(vm)
+    expect(Array.from(vm.$el.children).map((node) => node.textContent)).toEqual(
+      ['visible', 'after'],
+    )
     vm.$destroy()
   })
 

@@ -141,7 +141,11 @@ function patchContainer(container: Node): void {
         : referenceChild
     const fragmentState = getFragmentState(newChild)
     if (fragmentState) {
-      getFragmentLeafNodes(newChild).forEach((child) => {
+      const leafNodes = getFragmentLeafNodes(newChild)
+      if (reference && leafNodes.indexOf(reference) !== -1) {
+        return newChild
+      }
+      leafNodes.forEach((child) => {
         originalInsertBefore.call(this, child, reference)
       })
       return newChild
