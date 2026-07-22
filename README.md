@@ -1,4 +1,4 @@
-# @lin/vue-fragment
+# @shoulinzhang/vue-fragment
 
 为 Vue 2.6 及更高版本提供无包裹元素的 `Fragment` 组件，作用与 Vue 3 的 Fragment 或 React Fragment 类似。
 
@@ -13,7 +13,7 @@
 ## 安装
 
 ```bash
-npm install @lin/vue-fragment
+npm install @shoulinzhang/vue-fragment
 ```
 
 项目需要自行安装 Vue 2：
@@ -37,7 +37,7 @@ npm install vue@^2.6.0
 </template>
 
 <script>
-import Fragment from '@lin/vue-fragment'
+import Fragment from '@shoulinzhang/vue-fragment'
 
 export default {
   components: { Fragment },
@@ -49,7 +49,7 @@ export default {
 
 ```ts
 import Vue from 'vue'
-import Fragment from '@lin/vue-fragment'
+import Fragment from '@shoulinzhang/vue-fragment'
 
 Vue.use(Fragment)
 ```
@@ -61,7 +61,7 @@ Vue.use(Fragment)
 
 ```ts
 import Vue from 'vue'
-import Fragment from '@lin/vue-fragment'
+import Fragment from '@shoulinzhang/vue-fragment'
 
 export default Vue.extend({
   render(h) {
