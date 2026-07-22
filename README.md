@@ -76,6 +76,17 @@ export default Vue.extend({
 
 Vue 2 的页面或组件模板本身仍然必须只有一个根节点。`Fragment` 用于已存在的父元素内部，无法取消 Vue 2 模板最外层的单根限制。
 
+## 已知限制
+
+- 暂不支持以 `Fragment` 为根的有状态组件在 `keep-alive` 中停用和恢复。该能力需要完整的 Fragment 范围分离与恢复语义，将在后续版本中支持。
+- 不建议在 Fragment 子节点处于异步 transition 离场阶段时，同时重排整个 keyed Fragment 分组。
+- SSR hydration 当前适用于普通 HTML 容器；`table`、SVG 等具有严格内容模型的容器暂不支持 Fragment hydration。
+
+## 后续计划
+
+- 支持以 Fragment 为根的组件在 `keep-alive` 中停用、更新和恢复。
+- 完善 Fragment 范围的逻辑父节点同步和脱离 DOM 后的 patch 行为。
+
 ## 开发
 
 ```bash

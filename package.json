@@ -1,6 +1,6 @@
 {
   "name": "@shoulinzhang/vue-fragment",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A wrapperless Fragment component for Vue 2.6 and later.",
   "keywords": [
     "vue",
