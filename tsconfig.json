@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES2018",
+    "target": "ES2015",
     "module": "ESNext",
     "moduleResolution": "Node",
     "strict": true,
@@ -9,7 +9,7 @@
     "skipLibCheck": true,
     "sourceMap": true,
     "types": ["node", "vitest/globals"],
-    "lib": ["ES2018", "DOM"]
+    "lib": ["ES2015", "DOM"]
   },
   "include": ["src/**/*.ts", "tests/**/*.ts", "vitest.config.ts"]
 }
