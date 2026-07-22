@@ -91,6 +91,22 @@ function removeNode(node: Node): void {
   node.parentNode?.removeChild(node)
 }
 
+function getFragmentLeafNodes(node: Node): Node[] {
+  const fragmentState = getFragmentState(node)
+  if (!fragmentState) {
+    return [node]
+  }
+
+  const children = fragmentState.children.length
+    ? fragmentState.children
+    : [fragmentState.anchor]
+  const leafNodes: Node[] = []
+  children.forEach((child) => {
+    leafNodes.push(...getFragmentLeafNodes(child))
+  })
+  return leafNodes
+}
+
 function patchContainer(container: Node): void {
   const patchedContainer = container as Node & {
     [insertBeforePatched]?: boolean
@@ -109,6 +125,13 @@ function patchContainer(container: Node): void {
       referenceChild && isFragmentNode(referenceChild)
         ? getFragmentNodeFirstChild(referenceChild)
         : referenceChild
+    const fragmentState = getFragmentState(newChild)
+    if (fragmentState) {
+      getFragmentLeafNodes(newChild).forEach((child) => {
+        originalInsertBefore.call(this, child, reference)
+      })
+      return newChild
+    }
     return originalInsertBefore.call(this, newChild, reference) as T
   }
 
@@ -194,6 +217,12 @@ const Fragment: FragmentComponent = {
               return referenceChild.parentNode.insertBefore(
                 newChild,
                 referenceChild,
+              ) as T
+            }
+            if (getFragmentState(newChild) && this.parentNode) {
+              return this.parentNode.insertBefore(
+                newChild,
+                this.nextSibling,
               ) as T
             }
             return Node.prototype.insertBefore.call(
